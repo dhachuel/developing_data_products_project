@@ -1,0 +1,117 @@
+---
+title       : Shiny Weather App
+subtitle    : 
+author      : David Hachuel
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : prettify  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## Shiny Weather App
+
+This purpose of this presentation is to give an overview of the course project.
+
+---
+
+## The Problem
+
+Every morning you wake up and want to know what your day is going to be like. Weather conditions are something we always lookup in the morning. Sure enough, there are tons of weather services/products/apps that will provide the required information. But here is what doesn't work for me:
+
+1. They display too much information that is not needed
+2. They are limited to city wide location selection
+3. Looking up a place usually takes several cumbersome clicks
+4. They don't usually show you more specific location data (like a map)
+
+---
+
+## The Solution
+
+A good weather app must be simple and fast to use. It needs to let the user look up locations quickly and effortlessly.
+
+Introducing...
+
+--> **SHINY WEATHER**
+
+---
+
+## Demo
+
+The script does the following:
+- Get location input
+- Makes an API request to Google geo api and gets lat and lng coordinates
+- Makes another API request to openweathermap to get weather data for those coordinates
+- Generates a Leaflet map for those coordenates and displays weather info
+
+Here is the raw HTML output:
+```{r, echo=FALSE, cache=FALSE,render=TRUE}
+library(shiny)
+library(leaflet)
+library(RCurl)
+library(rjson)
+library(R2HTML)
+
+location <- "New York, 10014"
+
+location <- gsub(pattern = " ", replacement = "%20", x = location)
+    
+    # Base geolocation Google API endpoint
+    ggapi_url <- "http://maps.googleapis.com/maps/api/geocode/json?address="
+    
+    # Get coordinates and address from zip code
+    geo_data <- fromJSON(getURL(url = paste(ggapi_url, location, sep='')))
+    formatted_address <- geo_data[1]$results[[1]]$formatted_address
+    lat <- as.numeric(geo_data[1]$results[[1]]$geometry$bounds$northeast$lat)
+    lng <- as.numeric(geo_data[1]$results[[1]]$geometry$bounds$northeast$lng)
+    
+    # Get weather data from OpenWeatherMap
+    weather_url <- paste(
+      "http://api.openweathermap.org/data/2.5/weather?lat=",
+      lat,
+      "&lon=",
+      lng,
+      sep='')
+    weather_data <- fromJSON(getURL(url = weather_url))
+    weather.main <- weather_data$weather[[1]]$main
+    weather.description <- weather_data$weather[[1]]$description
+    weather.temp <- round(weather_data$main$temp - 273.15,1) # Celcius scale
+    weather.unit <- "C"
+    
+    weather.icon <- paste(
+      "http://openweathermap.org/img/w/",
+      weather_data$weather[[1]]$icon,
+      ".png",
+      sep=''
+    )
+    
+    
+    content <- paste(
+      sep = "",
+      paste("<center><h2>",formatted_address,"</h2></center>",sep=''),
+      paste("<center><img src='",weather.icon,"'></center>",sep=''),
+      paste("<center><h1>",weather.temp," &#186",weather.unit,"</h1></center>",sep=''),
+      paste("<center><strong>",weather.main,"</strong>: ",weather.description,"</center>",sep='')
+    )
+
+    cat(formatted_address)
+    cat("\n")
+    cat(paste(weather.temp," ºC",weather.unit,"",sep=''))
+    cat("\n")
+    cat(paste(weather.main,": ",weather.description,sep=''))
+#     
+#     map <- leaflet() %>% addTiles() %>%  addPopups(lng, lat, content,options = popupOptions(closeButton = FALSE)
+#       )
+#   map
+```
+
+---
+
+
+## CONTACT ME
+- [SHINY WEATHER url](https://dhachuel.shinyapps.io/SHINYWEATHER)
+- Email me: dhachuel@gmail.com
+
+---
